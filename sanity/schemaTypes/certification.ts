@@ -15,4 +15,5 @@ export const certification = defineType({
     defineField({name: 'badgeImage', title: 'Badge/Certificate Image', type: 'image'}),
     defineField({name: 'order', title: 'Order', type: 'number'}),
   ],
+  orderings: [{title: 'Order', name: 'orderAsc', by: [{field: 'order', direction: 'asc'}]}],
 })

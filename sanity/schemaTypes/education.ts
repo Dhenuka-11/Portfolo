@@ -20,4 +20,5 @@ export const education = defineType({
     }),
     defineField({name: 'order', title: 'Order', type: 'number'}),
   ],
+  orderings: [{title: 'Order', name: 'orderAsc', by: [{field: 'order', direction: 'asc'}]}],
 })

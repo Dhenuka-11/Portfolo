@@ -8,9 +8,10 @@ export const client = createClient({
 })
 
 export const queries = {
-  about: `*[_type == "about"][0]{..., photo{asset->}}`,
+  about: `*[_type == "about"][0]{..., photo{asset->}, sketchImage{asset->}, featurePhoto{asset->}}`,
   experience: `*[_type == "experience"] | order(order asc)`,
   projects: `*[_type == "project"] | order(order asc)`,
   certifications: `*[_type == "certification"] | order(order asc){..., badgeImage{asset->}}`,
   education: `*[_type == "education"] | order(order asc){..., logo{asset->}}`,
+  photos: `*[_type == "photo"] | order(order asc){..., image{asset->}}`,
 }

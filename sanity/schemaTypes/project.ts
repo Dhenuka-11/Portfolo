@@ -17,4 +17,5 @@ export const project = defineType({
     }),
     defineField({name: 'order', title: 'Order', type: 'number'}),
   ],
+  orderings: [{title: 'Order', name: 'orderAsc', by: [{field: 'order', direction: 'asc'}]}],
 })

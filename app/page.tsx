@@ -4,14 +4,14 @@ import Portfolio from './components/Portfolio'
 export const revalidate = 60
 
 export default async function Home() {
-  const [about, experience, projects, certifications, education] = await Promise.all([
+  const [about, experience, projects, certifications, education, photos] = await Promise.all([
     client.fetch(queries.about),
     client.fetch(queries.experience),
     client.fetch(queries.projects),
     client.fetch(queries.certifications),
     client.fetch(queries.education),
+    client.fetch(queries.photos),
   ])
-
   return (
     <Portfolio
       about={about}
@@ -19,6 +19,7 @@ export default async function Home() {
       projects={projects}
       certifications={certifications}
       education={education}
+      photos={photos}
     />
   )
 }

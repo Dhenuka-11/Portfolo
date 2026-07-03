@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react'
 import Image from 'next/image'
+import { PortableText } from '@portabletext/react'
 import { urlFor } from '../../lib/sanityImage'
 
 interface About {
   name: string
   role: string
   tagline: string
+  bio: any
   gpa: string
   university: string
   graduationYear: string
@@ -17,6 +19,8 @@ interface About {
   github: string
   availableFrom: string
   photo: any
+  featurePhoto: any
+  sketchImage: any
 }
 
 interface Experience {
@@ -57,33 +61,59 @@ interface Education {
   logo: any
 }
 
+interface Photo {
+  title?: string
+  caption?: string
+  image: any
+}
+
 interface Props {
   about: About
   experience: Experience[]
   projects: Project[]
   certifications: Certification[]
   education: Education[]
+  photos: Photo[]
 }
 
-export default function Portfolio({ about, experience, projects, certifications, education }: Props) {
+const toolGroups = [
+  { title: 'Languages', items: ['Python', 'SQL', 'JavaScript', 'HTML', 'CSS'] },
+  { title: 'Azure', items: ['ADF', 'Synapse', 'ADLS', 'Azure Monitor', 'Microsoft Fabric'] },
+  { title: 'AWS', items: ['S3', 'EC2', 'Redshift', 'RDS', 'Lambda'] },
+  { title: 'Data Engineering', items: ['Databricks', 'Snowflake', 'Apache Airflow', 'Spark', 'PySpark', 'ETL', 'Data Warehousing', 'Data Modeling'] },
+  { title: 'Databases', items: ['MySQL', 'PostgreSQL', 'MongoDB', 'Amazon RDS'] },
+  { title: 'Machine Learning', items: ['PyTorch', 'CNNs', 'NumPy', 'pandas', 'MNIST', 'CIFAR-10', 'ImageNet'] },
+  { title: 'Tools', items: ['Docker', 'Jenkins', 'Git', 'VS Code', 'PyCharm', 'IntelliJ', 'Jira', 'CI/CD'] },
+  { title: 'Visualization', items: ['Power BI', 'Matplotlib'] },
+]
+
+const bioFallback = [
+  "As a Master's student in Computer Science at the University of Georgia, I focus on distributed systems, machine learning, and cloud-native data engineering. I love building data systems that scale — from robust ETL pipelines to self-healing microservices.",
+  "Previously, I interned as a Data Engineer at JSW One Platforms in Hyderabad, where I built end-to-end ETL pipelines with Python and Azure Data Factory, and maintained CI/CD pipelines on Azure DevOps. I hold certifications including Microsoft Fabric DP-700 and the Databricks Data Engineer Associate.",
+  "Beyond the terminal, I find creative expression through photography and pencil sketching — two of the ways I recharge and keep my eye curious.",
+]
+
+export default function Portfolio({ about, experience, projects, certifications, education, photos }: Props) {
   useEffect(() => {
-    // Theme from localStorage
     try {
       const saved = localStorage.getItem('theme')
-      if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark')
+      const theme = saved || 'dark'
+      document.documentElement.setAttribute('data-theme', theme)
+      const thumb = document.getElementById('ttThumb')
+      const lbl = document.getElementById('ttLbl')
+      if (thumb) thumb.textContent = theme === 'dark' ? '🌙' : '☀️'
+      if (lbl) lbl.textContent = theme === 'dark' ? 'Dark' : 'Light'
     } catch(e) {}
 
-    // Scroll reveal
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible') }),
       { threshold: 0.1 }
     )
     document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
 
-    // Typewriter
     const el = document.getElementById('tw')
     if (el) {
-      const phrases = [' Software Engineer', ' Analytics Engineer', ' AI Engineer', ' Data Engineer']
+      const phrases = [' Analytics Engineer', ' AI Engineer', ' Data Engineer']
       let pi = 0, ci = 0, del = false, paused = false
       const type = () => {
         if (paused) return
@@ -101,7 +131,6 @@ export default function Portfolio({ about, experience, projects, certifications,
       setTimeout(type, 800)
     }
 
-    // Scroll progress + nav
     const onScroll = () => {
       const s = window.scrollY
       const max = document.documentElement.scrollHeight - window.innerHeight
@@ -112,7 +141,6 @@ export default function Portfolio({ about, experience, projects, certifications,
     }
     window.addEventListener('scroll', onScroll, { passive: true })
 
-    // Canvas particles
     const canvas = document.getElementById('bgc') as HTMLCanvasElement
     let animId: number
     if (canvas) {
@@ -169,6 +197,13 @@ export default function Portfolio({ about, experience, projects, certifications,
   const accentColors = ['#7b2d3e', '#1f5f5b', '#8b6418']
 
   const photoUrl = about?.photo ? urlFor(about.photo).width(720).height(860).fit('crop').url() : null
+  const centerUrl = about?.photo ? urlFor(about.photo).width(520).height(660).fit('crop').url() : null
+  const leftUrl = about?.featurePhoto ? urlFor(about.featurePhoto).width(460).height(600).fit('crop').url() : null
+  const rightUrl = about?.sketchImage ? urlFor(about.sketchImage).width(460).height(600).fit('crop').url() : null
+
+  const hasBio = Array.isArray(about?.bio) && about.bio.length > 0
+
+  const navItems = ['about','tools','experience','projects','certifications','education','contact']
 
   return (
     <>
@@ -185,7 +220,7 @@ export default function Portfolio({ about, experience, projects, certifications,
         nav.scrolled{box-shadow:0 2px 28px var(--glow)}
         .logo{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:var(--b);text-decoration:none}
         .nav-links{display:flex;list-style:none}
-        .nav-links a{color:var(--mu);text-decoration:none;font-size:.77rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .8rem;transition:color .2s}
+        .nav-links a{color:var(--mu);text-decoration:none;font-size:.77rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .7rem;transition:color .2s}
         .nav-links a:hover{color:var(--b)}
         .tt{width:52px;height:26px;background:var(--surface);border:1.5px solid var(--bd2);border-radius:20px;cursor:pointer;position:relative;flex-shrink:0;display:inline-block}
         .tt-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;background:var(--b);border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
@@ -195,7 +230,6 @@ export default function Portfolio({ about, experience, projects, certifications,
         .reveal.visible{opacity:1;transform:none}
         .sec-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;margin-bottom:3rem;color:var(--tx)}
         .sec-title em{font-style:italic;color:var(--b)}
-        .sec-label{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--b);letter-spacing:.3em;text-transform:uppercase;margin-bottom:.5rem}
         .pill{display:inline-block;background:var(--b);color:#fff;font-size:.72rem;font-weight:600;padding:.22rem .65rem;border-radius:3px;margin-right:.35rem}
         .btn{padding:.74rem 1.9rem;border-radius:2px;font-size:.78rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;letter-spacing:.1em;text-transform:uppercase;transition:all .3s;border:2px solid var(--b)}
         .btn-p{background:var(--b);color:#fff;box-shadow:0 4px 16px var(--glow)}
@@ -214,6 +248,32 @@ export default function Portfolio({ about, experience, projects, certifications,
         .photo-wrap:hover .photo-bg2{transform:translate(14px,14px);transition:transform .5s}
         .photo-wrap:hover .photo-frame img{transform:scale(1.04);transition:transform .7s}
         .sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--bd2),transparent)}
+        /* ABOUT REDESIGN */
+        .about-hi{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:700;text-align:center;margin-bottom:.8rem}
+        .about-hi em{font-style:italic;color:var(--b)}
+        .about-lede{text-align:center;color:var(--b);font-size:1.02rem;font-weight:500;max-width:600px;margin:0 auto 1.4rem;line-height:1.6}
+        .about-chips{display:flex;justify-content:center;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem}
+        .about-chip{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--tx2);background:var(--surface);border:1.5px solid var(--bd2);border-radius:20px;padding:.4rem 1rem;display:flex;align-items:center;gap:.45rem}
+        .about-chip b{color:var(--b);font-weight:700}
+        .cluster{position:relative;height:440px;margin:2rem auto 3rem;max-width:820px}
+        .ablob{position:absolute;border-radius:50%;filter:blur(10px);z-index:0;pointer-events:none}
+        .ablob1{width:280px;height:250px;left:0;top:60px;background:radial-gradient(circle,var(--bp),transparent 70%)}
+        .ablob2{width:240px;height:240px;left:34%;bottom:0;background:radial-gradient(circle,rgba(62,207,184,.12),transparent 70%)}
+        .ablob3{width:270px;height:250px;right:0;top:40px;background:radial-gradient(circle,rgba(128,170,221,.13),transparent 70%)}
+        .aswirl{position:absolute;inset:0;z-index:1;opacity:.4;pointer-events:none}
+        .aframe{position:absolute;border:5px solid #fff;border-radius:12px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5);z-index:3;transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+        .aframe:hover{transform:rotate(0deg) scale(1.04) !important;z-index:10}
+        .af-left{width:210px;height:275px;left:3%;top:75px;transform:rotate(-8deg);z-index:2}
+        .af-center{width:235px;height:305px;left:50%;top:40px;margin-left:-117px;transform:rotate(2deg);z-index:6}
+        .af-right{width:210px;height:275px;right:3%;top:75px;transform:rotate(8deg);z-index:2}
+        .adot{position:absolute;border-radius:50%;z-index:5;pointer-events:none}
+        .adot1{width:20px;height:20px;background:var(--s);left:24%;top:52px}
+        .adot2{width:15px;height:15px;background:var(--b);right:24%;bottom:56px}
+        .adot3{width:11px;height:11px;background:var(--g);left:47%;bottom:22px}
+        .about-bio{max-width:680px;margin:0 auto;color:var(--tx2)}
+        .about-bio p{line-height:1.95;font-size:.92rem;margin-bottom:1.15rem;text-align:justify}
+        .about-bio strong{color:var(--tx);font-weight:600}
+        .collage-stage{position:relative}
         @media(max-width:1080px){
           #hero-grid{grid-template-columns:1fr !important}
           .photo-wrap{width:280px;height:330px;margin:0 auto}
@@ -222,6 +282,11 @@ export default function Portfolio({ about, experience, projects, certifications,
           nav{padding:0 1.5rem}
           .nav-links{display:none}
           section{padding-left:1.5rem;padding-right:1.5rem}
+          .cluster{height:auto;display:flex;flex-wrap:wrap;justify-content:center;gap:.8rem}
+          .ablob,.aswirl,.adot{display:none}
+          .aframe{position:relative !important;transform:none !important;left:auto !important;right:auto !important;top:auto !important;margin:0 !important;width:44% !important;height:auto !important;aspect-ratio:3/4;border-width:4px}
+          .af-center{width:60% !important;order:-1}
+          .aframe:hover{transform:scale(1.02) !important}
         }
       `}</style>
 
@@ -230,16 +295,16 @@ export default function Portfolio({ about, experience, projects, certifications,
 
       {/* NAV */}
       <nav id="nav">
-        <a className="logo" href="#hero">Dhenuka C.</a>
+        <a className="logo" href="#hero">Dhenuka Chelumalla</a>
         <ul className="nav-links">
-          {['about','experience','projects','certifications','education','contact'].map(s => (
+          {navItems.map(s => (
             <li key={s}><a href={`#${s}`}>{s}</a></li>
           ))}
         </ul>
         <div style={{display:'flex',alignItems:'center',gap:'.75rem'}}>
-          <span id="ttLbl" style={{fontFamily:'JetBrains Mono',fontSize:'.65rem',color:'var(--mu)',letterSpacing:'.1em',textTransform:'uppercase'}}>Light</span>
+          <span id="ttLbl" style={{fontFamily:'JetBrains Mono',fontSize:'.65rem',color:'var(--mu)',letterSpacing:'.1em',textTransform:'uppercase'}}>Dark</span>
           <div className="tt" id="tt" onClick={toggleTheme}>
-            <div className="tt-thumb" id="ttThumb">☀️</div>
+            <div className="tt-thumb" id="ttThumb">🌙</div>
           </div>
         </div>
       </nav>
@@ -250,7 +315,7 @@ export default function Portfolio({ about, experience, projects, certifications,
           <div>
             <div style={{display:'inline-flex',alignItems:'center',gap:'.6rem',fontFamily:'JetBrains Mono',fontSize:'.68rem',letterSpacing:'.22em',textTransform:'uppercase',color:'var(--b)',marginBottom:'1.75rem'}}>
               <div style={{width:'28px',height:'1.5px',background:'var(--b)'}}></div>
-              Available for full-time roles · {about?.availableFrom || '2027'}
+              Available for full-time roles | {about?.availableFrom || '2027'}
             </div>
             <h1 style={{fontFamily:'Cormorant Garamond',fontSize:'clamp(3rem,6vw,5.8rem)',fontWeight:700,lineHeight:1,marginBottom:'1.1rem'}}>
               {about?.name?.split(' ')[0] || 'Dhenuka'}<br/>
@@ -262,15 +327,15 @@ export default function Portfolio({ about, experience, projects, certifications,
               <span id="tw"></span>
             </p>
             <p style={{fontSize:'.85rem',color:'var(--mu)',lineHeight:2,marginBottom:'2.5rem',maxWidth:'480px',fontFamily:'JetBrains Mono'}}>
-              {about?.tagline || 'MS Computer Science @ UGA · Microsoft Fabric DP-700 · Databricks Certified'}
+              {about?.tagline || 'MS Computer Science @ UGA | Microsoft Fabric DP-700 | Databricks Certified'}
             </p>
             <div style={{display:'flex',gap:'1rem',flexWrap:'wrap'}}>
               <a href="#projects" className="btn btn-p">View Projects</a>
+              <a href="/resume.pdf" target="_blank" rel="noopener" className="btn btn-g">Resume</a>
               <a href="#contact" className="btn btn-g">Get in Touch</a>
             </div>
           </div>
 
-          {/* PHOTO */}
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'1.5rem'}}>
             <div className="photo-wrap">
               <div className="photo-bg2"></div>
@@ -285,59 +350,91 @@ export default function Portfolio({ about, experience, projects, certifications,
                 )}
               </div>
             </div>
-            <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',justifyContent:'center'}}>
-              {[`MS CS @ ${about?.university?.split(' ').pop() || 'UGA'}`, `GPA ${about?.gpa || '3.6'} / 4.0`, 'DP-700 Certified'].map((t,i) => (
-                <div key={i} style={{background:'var(--surface)',border:'1.5px solid var(--bd2)',borderRadius:'3px',padding:'.48rem .9rem',fontFamily:'JetBrains Mono',fontSize:'.68rem',color:'var(--tx2)',display:'flex',alignItems:'center',gap:'.4rem',boxShadow:'var(--sh)'}}>
-                  <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'var(--b)',flexShrink:0}}></div>
-                  {t}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
       <div className="sdiv"></div>
 
-      {/* ABOUT */}
+      {/* ABOUT — redesigned */}
       <section id="about">
-        <div className="sec-label reveal">01 — About</div>
-        <h2 className="sec-title reveal">About <em>Me</em></h2>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'4rem'}} className="reveal">
-          <div>
-            <p style={{color:'var(--tx2)',lineHeight:2,fontSize:'.91rem',marginBottom:'1rem'}}>
-              I&apos;m a Data Engineer and ML practitioner currently pursuing an MS in Computer Science at the {about?.university || 'University of Georgia'} (GPA {about?.gpa || '3.6'}/4.0), deepening my expertise in distributed systems, machine learning, and cloud-native data engineering.
-            </p>
-            <p style={{color:'var(--tx2)',lineHeight:2,fontSize:'.91rem'}}>
-              I&apos;m actively seeking full-time roles as a Data Engineer, Analytics Engineer, or Software Engineer starting mid-{about?.graduationYear || '2027'}.
-            </p>
+        <h2 className="about-hi reveal">Nice to <em>meet you!</em> 👋</h2>
+        <p className="about-lede reveal">
+          I&apos;m {about?.name?.split(' ')[0] || 'Dhenuka'} — a Data Engineer and CS grad student based in Athens, Georgia.
+        </p>
+        <div className="about-chips reveal">
+          <div className="about-chip"><b>{about?.gpa || '3.6'}</b> MS GPA / 4.0</div>
+          <div className="about-chip"><b>{(certifications||[]).length || 4}+</b> Certifications</div>
+        </div>
+
+        <div className="cluster reveal">
+          <div className="ablob ablob1"></div>
+          <div className="ablob ablob2"></div>
+          <div className="ablob ablob3"></div>
+          <svg className="aswirl" viewBox="0 0 820 440" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M60,240 C220,80 380,360 500,200 S760,120 800,300" fill="none" stroke="var(--b)" strokeWidth="2" opacity="0.5"/>
+          </svg>
+          <div className="adot adot1"></div>
+          <div className="adot adot2"></div>
+          <div className="adot adot3"></div>
+
+          <div className="aframe af-left">
+            {leftUrl ? (
+              <Image src={leftUrl} alt="Photography" fill sizes="210px" style={{objectFit:'cover'}}/>
+            ) : (
+              <div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#3a2030,#5a2a40)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontFamily:'JetBrains Mono',fontSize:'.6rem',textAlign:'center',padding:'.5rem'}}>Add Feature Photo in Studio</div>
+            )}
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
-            {[
-              {num: about?.gpa || '3.6', lab: 'MS GPA / 4.0', color: 'var(--b)'},
-              {num: `${(certifications||[]).length || 5}+`, lab: 'Certifications', color: 'var(--t)'},
-              {num: about?.graduationYear || '2027', lab: 'Graduating', color: 'var(--g)'},
-              {num: 'UGA', lab: 'Athens, Georgia', color: 'var(--s)'},
-            ].map((s,i) => (
-              <div key={i} className="card" style={{textAlign:'center',borderTop:`2px solid ${s.color}`}}>
-                <div style={{fontFamily:'Cormorant Garamond',fontSize:'2rem',fontWeight:700,color:s.color}}>{s.num}</div>
-                <div style={{fontSize:'.68rem',color:'var(--mu)',marginTop:'.3rem',fontFamily:'JetBrains Mono',letterSpacing:'.08em',textTransform:'uppercase'}}>{s.lab}</div>
+          <div className="aframe af-right">
+            {rightUrl ? (
+              <Image src={rightUrl} alt="Pencil sketch" fill sizes="210px" style={{objectFit:'cover'}}/>
+            ) : (
+              <div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#2b2b30,#3f3f46)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontFamily:'JetBrains Mono',fontSize:'.6rem',textAlign:'center',padding:'.5rem'}}>Add Pencil Sketch in Studio</div>
+            )}
+          </div>
+          <div className="aframe af-center">
+            {centerUrl ? (
+              <Image src={centerUrl} alt={about?.name || 'Dhenuka'} fill sizes="235px" style={{objectFit:'cover'}}/>
+            ) : (
+              <div style={{width:'100%',height:'100%',background:'linear-gradient(135deg,#3a2530,#583a48)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontFamily:'JetBrains Mono',fontSize:'.6rem',textAlign:'center',padding:'.5rem'}}>Add Photo in Studio</div>
+            )}
+          </div>
+        </div>
+
+        <div className="about-bio reveal">
+          {hasBio ? (
+            <PortableText value={about.bio} />
+          ) : (
+            bioFallback.map((p, i) => <p key={i}>{p}</p>)
+          )}
+        </div>
+      </section>
+      <div className="sdiv"></div>
+
+      {/* TOOLS */}
+      <section id="tools">
+        <h2 className="sec-title reveal">Tools &amp; <em>Tech</em></h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'1.4rem'}}>
+          {toolGroups.map((g,i) => (
+            <div key={i} className="card reveal" style={{borderTop:`2px solid ${accentColors[i%accentColors.length]}`}}>
+              <div style={{fontFamily:'JetBrains Mono',fontSize:'.7rem',color:'var(--b)',letterSpacing:'.15em',textTransform:'uppercase',marginBottom:'1rem'}}>{g.title}</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'.4rem'}}>
+                {g.items.map((t,j) => <span key={j} className="tag">{t}</span>)}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
       <div className="sdiv"></div>
 
       {/* EXPERIENCE */}
       <section id="experience">
-        <div className="sec-label reveal">02 — Experience</div>
         <h2 className="sec-title reveal">Work <em>Experience</em></h2>
         {(experience?.length > 0) ? experience.map((exp, i) => (
           <div key={i} className="card reveal" style={{marginBottom:'1.5rem',borderLeft:'2px solid var(--b)',paddingLeft:'2rem',position:'relative'}}>
             <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:'.75rem',marginBottom:'1.25rem'}}>
               <div>
                 <div style={{fontFamily:'Cormorant Garamond',fontSize:'1.4rem',fontWeight:700}}>{exp.role}</div>
-                <div style={{color:'var(--b)',fontFamily:'JetBrains Mono',fontSize:'.78rem',marginTop:'.25rem'}}>{exp.company} · {exp.location}</div>
+                <div style={{color:'var(--b)',fontFamily:'JetBrains Mono',fontSize:'.78rem',marginTop:'.25rem'}}>{exp.company} | {exp.location}</div>
               </div>
               <div style={{fontFamily:'JetBrains Mono',fontSize:'.68rem',background:'var(--bp)',color:'var(--b)',padding:'.3rem .85rem',borderRadius:'2px',border:'1px solid var(--bm)',height:'fit-content'}}>{exp.startDate} – {exp.endDate}</div>
             </div>
@@ -359,7 +456,6 @@ export default function Portfolio({ about, experience, projects, certifications,
 
       {/* PROJECTS */}
       <section id="projects">
-        <div className="sec-label reveal">03 — Projects</div>
         <h2 className="sec-title reveal">Featured <em>Projects</em></h2>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'1.4rem'}}>
           {(projects?.length > 0) ? projects.map((p,i) => (
@@ -383,7 +479,6 @@ export default function Portfolio({ about, experience, projects, certifications,
 
       {/* CERTIFICATIONS */}
       <section id="certifications">
-        <div className="sec-label reveal">04 — Certifications</div>
         <h2 className="sec-title reveal">Certifi<em>cations</em></h2>
         <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'1.4rem'}}>
           {(certifications?.length > 0) ? certifications.map((c,i) => {
@@ -400,7 +495,7 @@ export default function Portfolio({ about, experience, projects, certifications,
                   <div style={{width:'100%',height:'80px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'2.5rem'}}>🏅</div>
                 )}
                 <div style={{fontSize:'.85rem',fontWeight:600,color:'var(--tx)',lineHeight:1.5}}>{c.name}</div>
-                <div style={{fontFamily:'JetBrains Mono',fontSize:'.68rem',color:'var(--mu)'}}>{c.earnedDate}{c.expiryDate?` · Expires ${c.expiryDate}`:''}</div>
+                <div style={{fontFamily:'JetBrains Mono',fontSize:'.68rem',color:'var(--mu)'}}>{c.earnedDate}{c.expiryDate?` | Expires ${c.expiryDate}`:''}</div>
                 <span style={{fontFamily:'JetBrains Mono',fontSize:'.67rem',padding:'.25rem .8rem',borderRadius:'2px',fontWeight:600,letterSpacing:'.07em',textTransform:'uppercase',background:'var(--bp)',color:'var(--b)',border:'1px solid var(--bm)'}}>{c.issuer}</span>
               </a>
             )
@@ -415,7 +510,6 @@ export default function Portfolio({ about, experience, projects, certifications,
 
       {/* EDUCATION */}
       <section id="education">
-        <div className="sec-label reveal">05 — Education</div>
         <h2 className="sec-title reveal">Edu<em>cation</em></h2>
         <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
           {(education?.length > 0) ? education.map((e,i) => {
@@ -429,8 +523,8 @@ export default function Portfolio({ about, experience, projects, certifications,
                 )}
                 <div>
                   <div style={{fontFamily:'Cormorant Garamond',fontSize:'1.2rem',fontWeight:700,marginBottom:'.35rem'}}>{e.degree}</div>
-                  <div style={{fontFamily:'JetBrains Mono',fontSize:'.78rem',color:i===0?'var(--b)':'var(--t)',marginBottom:'.4rem',fontWeight:600}}>{e.school}{e.gpa?` · GPA ${e.gpa}`:''}</div>
-                  <div style={{color:'var(--mu)',fontFamily:'JetBrains Mono',fontSize:'.75rem',marginBottom:'1rem'}}>{e.startDate} – {e.endDate} · {e.location}</div>
+                  <div style={{fontFamily:'JetBrains Mono',fontSize:'.78rem',color:i===0?'var(--b)':'var(--t)',marginBottom:'.4rem',fontWeight:600}}>{e.school}{e.gpa?` | GPA ${e.gpa}`:''}</div>
+                  <div style={{color:'var(--mu)',fontFamily:'JetBrains Mono',fontSize:'.75rem',marginBottom:'1rem'}}>{e.startDate} – {e.endDate} | {e.location}</div>
                   <div style={{display:'flex',flexWrap:'wrap',gap:'.4rem'}}>
                     {(e.courses||[]).map((c,j) => <span key={j} className="tag">{c}</span>)}
                   </div>
@@ -448,7 +542,6 @@ export default function Portfolio({ about, experience, projects, certifications,
 
       {/* CONTACT */}
       <section id="contact" style={{textAlign:'center'}}>
-        <div className="sec-label reveal">06 — Contact</div>
         <h2 className="sec-title reveal">Let&apos;s <em>Connect</em></h2>
         <p className="reveal" style={{color:'var(--tx2)',fontSize:'.9rem',maxWidth:'480px',margin:'0 auto 2.5rem',lineHeight:2,fontFamily:'JetBrains Mono'}}>
           Actively seeking full-time opportunities — open to roles starting mid-{about?.graduationYear || '2027'}.
@@ -471,7 +564,7 @@ export default function Portfolio({ about, experience, projects, certifications,
       </section>
 
       <footer style={{textAlign:'center',padding:'2rem',borderTop:'1px solid var(--bd)',fontFamily:'JetBrains Mono',fontSize:'.72rem',color:'var(--mu)',background:'var(--bg)',position:'relative',zIndex:2}}>
-        <p>Dhenuka Chelumalla · {new Date().getFullYear()} · Built with Next.js & Sanity</p>
+        <p>Dhenuka Chelumalla | {new Date().getFullYear()} | Built with Next.js &amp; Sanity</p>
       </footer>
     </>
   )
