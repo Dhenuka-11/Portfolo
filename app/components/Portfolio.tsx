@@ -76,15 +76,50 @@ interface Props {
   photos: Photo[]
 }
 
-const toolGroups = [
-  { title: 'Languages', items: ['Python', 'SQL', 'JavaScript', 'HTML', 'CSS'] },
-  { title: 'Azure', items: ['ADF', 'Synapse', 'ADLS', 'Azure Monitor', 'Microsoft Fabric'] },
-  { title: 'AWS', items: ['S3', 'EC2', 'Redshift', 'RDS', 'Lambda'] },
-  { title: 'Data Engineering', items: ['Databricks', 'Snowflake', 'Apache Airflow', 'Spark', 'PySpark', 'ETL', 'Data Warehousing', 'Data Modeling'] },
-  { title: 'Databases', items: ['MySQL', 'PostgreSQL', 'MongoDB', 'Amazon RDS'] },
-  { title: 'Machine Learning', items: ['PyTorch', 'CNNs', 'NumPy', 'pandas', 'MNIST', 'CIFAR-10', 'ImageNet'] },
-  { title: 'Tools', items: ['Docker', 'Jenkins', 'Git', 'VS Code', 'PyCharm', 'IntelliJ', 'Jira', 'CI/CD'] },
-  { title: 'Visualization', items: ['Power BI', 'Matplotlib'] },
+const toolConstellation: { label: string; nodes: { name: string; icon?: string; mono?: string }[]; also?: string }[] = [
+  { label: 'languages', nodes: [
+    { name: 'Python', icon: 'devicon-python-plain colored' },
+    { name: 'SQL', mono: 'SQL' },
+    { name: 'JavaScript', icon: 'devicon-javascript-plain colored' },
+    { name: 'HTML5', icon: 'devicon-html5-plain colored' },
+    { name: 'CSS3', icon: 'devicon-css3-plain colored' },
+  ] },
+  { label: 'azure', nodes: [
+    { name: 'Azure', icon: 'devicon-azure-plain colored' },
+    { name: 'Fabric', mono: 'FAB' },
+  ], also: 'Data Factory · Synapse · ADLS · Azure Monitor' },
+  { label: 'aws', nodes: [
+    { name: 'AWS', icon: 'devicon-amazonwebservices-plain-wordmark colored' },
+  ], also: 'S3 · EC2 · Redshift · RDS · Lambda' },
+  { label: 'data engineering', nodes: [
+    { name: 'Databricks', mono: 'DBX' },
+    { name: 'Snowflake', mono: 'SNW' },
+    { name: 'Airflow', icon: 'devicon-apacheairflow-plain colored' },
+    { name: 'Spark', icon: 'devicon-apachespark-plain colored' },
+  ], also: 'PySpark · ETL · Data Warehousing · Data Modeling' },
+  { label: 'databases', nodes: [
+    { name: 'MySQL', icon: 'devicon-mysql-plain colored' },
+    { name: 'PostgreSQL', icon: 'devicon-postgresql-plain colored' },
+    { name: 'MongoDB', icon: 'devicon-mongodb-plain colored' },
+  ], also: 'Amazon RDS' },
+  { label: 'machine learning', nodes: [
+    { name: 'PyTorch', icon: 'devicon-pytorch-original colored' },
+    { name: 'NumPy', icon: 'devicon-numpy-plain colored' },
+    { name: 'pandas', icon: 'devicon-pandas-plain colored' },
+  ], also: 'CNNs · MNIST · CIFAR-10 · ImageNet' },
+  { label: 'tools & platforms', nodes: [
+    { name: 'Docker', icon: 'devicon-docker-plain colored' },
+    { name: 'Jenkins', icon: 'devicon-jenkins-line colored' },
+    { name: 'Git', icon: 'devicon-git-plain colored' },
+    { name: 'VS Code', icon: 'devicon-vscode-plain colored' },
+    { name: 'PyCharm', icon: 'devicon-pycharm-plain colored' },
+    { name: 'IntelliJ', icon: 'devicon-intellij-plain colored' },
+    { name: 'Jira', icon: 'devicon-jira-plain colored' },
+  ], also: 'CI/CD' },
+  { label: 'visualization', nodes: [
+    { name: 'Power BI', mono: 'PBI' },
+    { name: 'Matplotlib', icon: 'devicon-matplotlib-plain colored' },
+  ] },
 ]
 
 const bioFallback = [
@@ -184,6 +219,66 @@ export default function Portfolio({ about, experience, projects, certifications,
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Tools constellation web
+  useEffect(() => {
+    const twCanvas = document.getElementById('toolweb') as HTMLCanvasElement | null
+    const sec = document.getElementById('tools')
+    if (!twCanvas || !sec) return
+    const tctx = twCanvas.getContext('2d')!
+    let icoEls = Array.from(document.querySelectorAll('#tools .tico')) as HTMLElement[]
+    let centers: { x: number; y: number }[] = []
+    let edges: [number, number][] = []
+    let tt = 0, frame = 0, twRaf = 0
+
+    const measure = () => {
+      const sr = sec.getBoundingClientRect()
+      twCanvas.width = sec.offsetWidth
+      twCanvas.height = sec.offsetHeight
+      centers = icoEls.map(elm => {
+        const r = elm.getBoundingClientRect()
+        return { x: r.left - sr.left + r.width / 2, y: r.top - sr.top + r.height / 2 }
+      })
+    }
+    const buildEdges = () => {
+      edges = []
+      const seen = new Set<string>()
+      centers.forEach((n, i) => {
+        const d = centers.map((m, j) => ({ j, dist: (n.x - m.x) ** 2 + (n.y - m.y) ** 2 })).filter(o => o.j !== i).sort((a, b) => a.dist - b.dist)
+        d.slice(0, 2).forEach(o => { const key = i < o.j ? i + '-' + o.j : o.j + '-' + i; if (!seen.has(key)) { seen.add(key); edges.push([i, o.j]) } })
+      })
+    }
+    const refresh = () => { icoEls = Array.from(document.querySelectorAll('#tools .tico')) as HTMLElement[]; measure(); buildEdges() }
+
+    const draw = () => {
+      tt += 0.012; frame++
+      if (frame % 10 === 0) measure()
+      tctx.clearRect(0, 0, twCanvas.width, twCanvas.height)
+      edges.forEach(([a, b], i) => {
+        const n1 = centers[a], n2 = centers[b]
+        if (!n1 || !n2) return
+        const pulse = 0.10 + 0.09 * Math.sin(tt + i * 0.6)
+        tctx.beginPath(); tctx.moveTo(n1.x, n1.y); tctx.lineTo(n2.x, n2.y)
+        tctx.strokeStyle = 'rgba(240,96,128,' + pulse + ')'; tctx.lineWidth = 1; tctx.stroke()
+      })
+      centers.forEach((n, i) => {
+        const glow = 1.5 + Math.sin(tt * 1.3 + i) * 0.6
+        tctx.beginPath(); tctx.arc(n.x, n.y, glow, 0, Math.PI * 2)
+        tctx.fillStyle = 'rgba(240,96,128,0.5)'; tctx.fill()
+      })
+      twRaf = requestAnimationFrame(draw)
+    }
+
+    refresh()
+    const timers = [300, 900, 1600].map(ms => setTimeout(refresh, ms))
+    window.addEventListener('resize', refresh)
+    draw()
+    return () => {
+      cancelAnimationFrame(twRaf)
+      window.removeEventListener('resize', refresh)
+      timers.forEach(clearTimeout)
+    }
+  }, [])
+
   const toggleTheme = () => {
     const dark = document.documentElement.getAttribute('data-theme') !== 'dark'
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
@@ -203,12 +298,13 @@ export default function Portfolio({ about, experience, projects, certifications,
 
   const hasBio = Array.isArray(about?.bio) && about.bio.length > 0
 
-  const navItems = ['about','tools','experience','projects','certifications','education','contact']
+  const navItems = ['about','experience','certifications','projects','tools','education','contact']
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css');
         [data-theme="light"]{--bg:#faf7f5;--surface:#fff;--b:#7b2d3e;--bl:#9c3d51;--bp:rgba(123,45,62,.08);--bm:rgba(123,45,62,.22);--t:#1f5f5b;--g:#8b6418;--s:#354a5c;--tx:#18100e;--tx2:#3d2830;--mu:#8a7080;--bd:rgba(123,45,62,.13);--bd2:rgba(123,45,62,.22);--nav:rgba(250,247,245,.93);--glow:rgba(123,45,62,.18);--sh:0 4px 24px rgba(123,45,62,.07)}
         [data-theme="dark"]{--bg:#060408;--surface:#110910;--b:#f06080;--bl:#ff85a0;--bp:rgba(240,96,128,.1);--bm:rgba(240,96,128,.26);--t:#3ecfb8;--g:#f0c060;--s:#80aadd;--tx:#f5eef0;--tx2:#c8a8b8;--mu:#806878;--bd:rgba(240,96,128,.13);--bd2:rgba(240,96,128,.24);--nav:rgba(6,4,8,.93);--glow:rgba(240,96,128,.22);--sh:0 4px 32px rgba(240,96,128,.1)}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -273,7 +369,20 @@ export default function Portfolio({ about, experience, projects, certifications,
         .about-bio{max-width:680px;margin:0 auto;color:var(--tx2)}
         .about-bio p{line-height:1.95;font-size:.92rem;margin-bottom:1.15rem;text-align:justify}
         .about-bio strong{color:var(--tx);font-weight:600}
-        .collage-stage{position:relative}
+        /* TOOLS CONSTELLATION */
+        #toolweb{position:absolute;inset:0;z-index:0;pointer-events:none}
+        .tgroup{position:relative;z-index:2;margin-bottom:3rem}
+        .tgroup-label{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500;color:var(--tx);margin-bottom:1.4rem;text-transform:lowercase;display:flex;align-items:center;gap:.7rem;letter-spacing:.05em}
+        .tgroup-label::before{content:'';width:18px;height:2px;background:var(--b)}
+        .tnodes{display:flex;flex-wrap:wrap;gap:2.4rem 2.6rem}
+        .tnode{display:flex;flex-direction:column;align-items:center;gap:.6rem;width:78px;text-align:center;transition:transform .3s}
+        .tnode:hover{transform:translateY(-5px) scale(1.06)}
+        .tico{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:44px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+        .tnm{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--tx2);letter-spacing:.02em;line-height:1.3}
+        .tnode:hover .tnm{color:var(--b)}
+        .tmono{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--b),var(--s));display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.8rem;color:#0a0510;letter-spacing:.02em;box-shadow:0 4px 14px var(--bp)}
+        .talso{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--mu);margin-top:1.1rem;letter-spacing:.03em;line-height:1.7;position:relative;z-index:2}
+        .talso b{color:var(--tx2);font-weight:500}
         @media(max-width:1080px){
           #hero-grid{grid-template-columns:1fr !important}
           .photo-wrap{width:280px;height:330px;margin:0 auto}
@@ -287,6 +396,7 @@ export default function Portfolio({ about, experience, projects, certifications,
           .aframe{position:relative !important;transform:none !important;left:auto !important;right:auto !important;top:auto !important;margin:0 !important;width:44% !important;height:auto !important;aspect-ratio:3/4;border-width:4px}
           .af-center{width:60% !important;order:-1}
           .aframe:hover{transform:scale(1.02) !important}
+          .tnodes{gap:1.8rem 1.6rem}
         }
       `}</style>
 
@@ -355,7 +465,7 @@ export default function Portfolio({ about, experience, projects, certifications,
       </section>
       <div className="sdiv"></div>
 
-      {/* ABOUT — redesigned */}
+      {/* ABOUT */}
       <section id="about">
         <h2 className="about-hi reveal">Nice to <em>meet you!</em> 👋</h2>
         <p className="about-lede reveal">
@@ -410,22 +520,6 @@ export default function Portfolio({ about, experience, projects, certifications,
       </section>
       <div className="sdiv"></div>
 
-      {/* TOOLS */}
-      <section id="tools">
-        <h2 className="sec-title reveal">Tools &amp; <em>Tech</em></h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:'1.4rem'}}>
-          {toolGroups.map((g,i) => (
-            <div key={i} className="card reveal" style={{borderTop:`2px solid ${accentColors[i%accentColors.length]}`}}>
-              <div style={{fontFamily:'JetBrains Mono',fontSize:'.7rem',color:'var(--b)',letterSpacing:'.15em',textTransform:'uppercase',marginBottom:'1rem'}}>{g.title}</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:'.4rem'}}>
-                {g.items.map((t,j) => <span key={j} className="tag">{t}</span>)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <div className="sdiv"></div>
-
       {/* EXPERIENCE */}
       <section id="experience">
         <h2 className="sec-title reveal">Work <em>Experience</em></h2>
@@ -451,29 +545,6 @@ export default function Portfolio({ about, experience, projects, certifications,
             <p style={{color:'var(--mu)',fontFamily:'JetBrains Mono',fontSize:'.85rem'}}>Add experience in Sanity Studio → <a href="/studio" style={{color:'var(--b)'}}>open studio</a></p>
           </div>
         )}
-      </section>
-      <div className="sdiv"></div>
-
-      {/* PROJECTS */}
-      <section id="projects">
-        <h2 className="sec-title reveal">Featured <em>Projects</em></h2>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'1.4rem'}}>
-          {(projects?.length > 0) ? projects.map((p,i) => (
-            <div key={i} className="card reveal" style={{display:'flex',flexDirection:'column',borderTop:`2px solid ${accentColors[i%accentColors.length]}`}}>
-              <div style={{fontFamily:'JetBrains Mono',fontSize:'.62rem',color:'var(--mu)',letterSpacing:'.2em',marginBottom:'.75rem',textTransform:'uppercase'}}>Project {String(i+1).padStart(2,'0')}</div>
-              <div style={{fontFamily:'Cormorant Garamond',fontSize:'1.3rem',fontWeight:700,marginBottom:'.8rem'}}>{p.title}</div>
-              <div style={{fontSize:'.83rem',color:'var(--tx2)',lineHeight:1.85,flex:1,marginBottom:'1.25rem'}}>{p.description}</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'1.25rem'}}>
-                {(p.tags||[]).map((t,j) => <span key={j} className="tag">{t}</span>)}
-              </div>
-              {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener" style={{fontFamily:'JetBrains Mono',fontSize:'.72rem',color:'var(--b)',textDecoration:'none',fontWeight:600,transition:'gap .2s'}}>→ View on GitHub</a>}
-            </div>
-          )) : (
-            <div className="card reveal">
-              <p style={{color:'var(--mu)',fontFamily:'JetBrains Mono',fontSize:'.85rem'}}>Add projects in Sanity Studio → <a href="/studio" style={{color:'var(--b)'}}>open studio</a></p>
-            </div>
-          )}
-        </div>
       </section>
       <div className="sdiv"></div>
 
@@ -505,6 +576,50 @@ export default function Portfolio({ about, experience, projects, certifications,
             </div>
           )}
         </div>
+      </section>
+      <div className="sdiv"></div>
+
+      {/* PROJECTS */}
+      <section id="projects">
+        <h2 className="sec-title reveal">Featured <em>Projects</em></h2>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:'1.4rem'}}>
+          {(projects?.length > 0) ? projects.map((p,i) => (
+            <div key={i} className="card reveal" style={{display:'flex',flexDirection:'column',borderTop:`2px solid ${accentColors[i%accentColors.length]}`}}>
+              <div style={{fontFamily:'JetBrains Mono',fontSize:'.62rem',color:'var(--mu)',letterSpacing:'.2em',marginBottom:'.75rem',textTransform:'uppercase'}}>Project {String(i+1).padStart(2,'0')}</div>
+              <div style={{fontFamily:'Cormorant Garamond',fontSize:'1.3rem',fontWeight:700,marginBottom:'.8rem'}}>{p.title}</div>
+              <div style={{fontSize:'.83rem',color:'var(--tx2)',lineHeight:1.85,flex:1,marginBottom:'1.25rem'}}>{p.description}</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'.4rem',marginBottom:'1.25rem'}}>
+                {(p.tags||[]).map((t,j) => <span key={j} className="tag">{t}</span>)}
+              </div>
+              {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener" style={{fontFamily:'JetBrains Mono',fontSize:'.72rem',color:'var(--b)',textDecoration:'none',fontWeight:600,transition:'gap .2s'}}>→ View on GitHub</a>}
+            </div>
+          )) : (
+            <div className="card reveal">
+              <p style={{color:'var(--mu)',fontFamily:'JetBrains Mono',fontSize:'.85rem'}}>Add projects in Sanity Studio → <a href="/studio" style={{color:'var(--b)'}}>open studio</a></p>
+            </div>
+          )}
+        </div>
+      </section>
+      <div className="sdiv"></div>
+
+      {/* TOOLS — constellation */}
+      <section id="tools">
+        <canvas id="toolweb"></canvas>
+        <h2 className="sec-title reveal" style={{position:'relative',zIndex:2}}>Tools &amp; <em>Tech</em></h2>
+        {toolConstellation.map((grp, gi) => (
+          <div key={gi} className="tgroup reveal">
+            <div className="tgroup-label">{grp.label}</div>
+            <div className="tnodes">
+              {grp.nodes.map((n, ni) => (
+                <div key={ni} className="tnode">
+                  <span className="tico">{n.mono ? <span className="tmono">{n.mono}</span> : <i className={n.icon}></i>}</span>
+                  <span className="tnm">{n.name}</span>
+                </div>
+              ))}
+            </div>
+            {grp.also && <div className="talso"><b>also:</b> {grp.also}</div>}
+          </div>
+        ))}
       </section>
       <div className="sdiv"></div>
 
